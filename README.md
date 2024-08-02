@@ -1,6 +1,6 @@
 # STEMorph: Morphed Emotional Face Stimuli
 
-This repository contains the data and code for the preprint "[STEMorph: A Set of Morphed Emotional Face Stimuli from Angry to Happy.]"(https://doi.org/10.1101/2024.05.13.59388) STEMorph is a validated stimulus set of morphed emotional faces transitioning from angry to happy expressions. This repository provides the necessary code to replicate the experimental task and analyze the results as described in the paper.
+This repository contains the data and code for the preprint ["STEMorph: A Set of Morphed Emotional Face Stimuli from Angry to Happy."](https://doi.org/10.1101/2024.05.13.59388) STEMorph is a validated stimulus set of morphed emotional faces transitioning from angry to happy expressions. This repository provides the necessary code and data to replicate the experimental task and analyze the results as described in the paper.
 
 ## Abstract
 
@@ -8,7 +8,7 @@ Emotion recognition is crucial for interpreting social cues, with facial express
 
 ## Face Dataset
 
-To obtain the face stimuli, visit the [NimStim Set of Facial Expressions](https://danlab.psychology.columbia.edu/content/nimstim-set-facial-expressions) website and follow the instructions to request access.
+To use the face stimuli, visit the [NimStim Set of Facial Expressions](https://danlab.psychology.columbia.edu/content/nimstim-set-facial-expressions) website and follow the instructions to request access.
 
 ## Citation
 
