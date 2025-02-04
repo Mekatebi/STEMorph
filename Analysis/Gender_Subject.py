@@ -15,6 +15,7 @@ import numpy as np
 from sklearn import linear_model
 import seaborn as sns
 import pingouin as pg
+import copy
 
 # Constants
 DATA_DIR = '../Data_Validity/'
@@ -87,6 +88,9 @@ def create_gender_comparison_plot(table, file_name):
         table (pandas.DataFrame): Preprocessed data table.
         file_name (str): Name of the file for saving the plot.
     """
+    # Create a copy of the table for violin plots with outliers removed
+    table_no_outliers = remove_outliers(copy.deepcopy(table))
+
     plt.figure()
     sns.set_style("ticks")
     sns.despine()
@@ -96,7 +100,7 @@ def create_gender_comparison_plot(table, file_name):
     palette = sns.color_palette("Spectral", 2)
 
     # Draw violin plot
-    sns.violinplot(data=table, x="Morph Step", y="Answer", hue="Gender", palette=palette,
+    sns.violinplot(data=table_no_outliers, x="Morph Step", y="Answer", hue="Gender", palette=palette,
                    split=True, gap=.45, inner=None, cut=3, native_scale=True, linewidth=0.8, width=1.1)
 
     title = ""
@@ -130,7 +134,7 @@ def create_gender_comparison_plot(table, file_name):
     plt.gca().spines['right'].set_visible(False)
 
     # Save plot
-    plt.savefig(os.path.join(RESULTS_DIR, f'{file_name} Regression.png'), dpi=1000,
+    plt.savefig(os.path.join(RESULTS_DIR, f'{file_name} Regression.png'), dpi=600,
                 bbox_inches='tight', pad_inches=0.1)
     plt.close()
 
@@ -159,7 +163,7 @@ def main():
         table_all = pd.concat([table_all, table], axis=0)
 
     # Remove outliers and create integrated plot
-    table_all = remove_outliers(table_all)
+    # table_all = remove_outliers(table_all)
     create_gender_comparison_plot(table_all, 'Gender_Subject Subject Average')
 
 

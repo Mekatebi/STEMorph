@@ -15,6 +15,7 @@ import numpy as np
 from sklearn import linear_model
 import seaborn as sns
 import pingouin as pg
+import copy
 
 # Constants
 FILES_ADDRESS = '../Data_Validity/'
@@ -86,6 +87,9 @@ def create_validity_plot(table, file_name):
         table (pandas.DataFrame): Preprocessed data table.
         file_name (str): Name of the file for saving the plot.
     """
+    # Create a copy of the table for violin plots with outliers removed
+    table_no_outliers = remove_outliers(copy.deepcopy(table))
+
     x = table['Morph Step'].values.reshape(-1, 1)
     y = table['Answer']
 
@@ -121,7 +125,7 @@ def create_validity_plot(table, file_name):
     sns.scatterplot(data=table, x="Morph_Step_Jittered", y="Answer_Jittered",
                     s=1, color='black', marker=".")
 
-    sns.violinplot(data=table, x="Morph Step", y="Answer", hue="Morph Step", legend=False,
+    sns.violinplot(data=table_no_outliers, x="Morph Step", y="Answer", hue="Morph Step", legend=False,
                    inner=None, cut=3, native_scale=True, palette=palette, saturation=1,
                    linewidth=0.8, width=0.6, fill=False)
 
@@ -141,7 +145,7 @@ def create_validity_plot(table, file_name):
         f'{file_name}\nR2 = {r_squared} | y = {slope} . x + {intercept}', fontsize=9)
 
     # Save plot
-    plt.savefig(os.path.join(RESULTS_DIR, f'{file_name} Regression.png'), dpi=1500,
+    plt.savefig(os.path.join(RESULTS_DIR, f'{file_name} Regression.png'), dpi=600,
                 bbox_inches='tight', pad_inches=0.1)
     plt.close()
 
@@ -165,7 +169,7 @@ def main():
         print(f"Processed {file_name}")
 
     # Process combined data
-    table_all = remove_outliers(table_all)
+    # table_all = remove_outliers(table_all)
     create_validity_plot(table_all, 'Validity - Subject Average')
 
 

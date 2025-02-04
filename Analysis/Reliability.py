@@ -14,6 +14,7 @@ import numpy as np
 from sklearn import linear_model
 import seaborn as sns
 import pingouin as pg
+import copy
 
 # Constants
 RELIABILITY_FILES_ADDRESS = '../Data_Reliability/'
@@ -87,6 +88,9 @@ def create_reliability_plot(table, file_name):
         table (pandas.DataFrame): Preprocessed data table.
         file_name (str): Name of the file for saving the plot.
     """
+    # Create a copy of the table for violin plots with outliers removed
+    table_no_outliers = remove_outliers(copy.deepcopy(table))
+
     x = table['Answer_Validity'].values.reshape(-1, 1)
     y = table['Answer']
 
@@ -110,7 +114,7 @@ def create_reliability_plot(table, file_name):
     palette.reverse()
 
     # Plot data
-    sns.violinplot(data=table, x="Answer_Validity", y="Answer", hue="Answer_Validity", legend=False,
+    sns.violinplot(data=table_no_outliers, x="Answer_Validity", y="Answer", hue="Answer_Validity", legend=False,
                    inner=None, cut=3, native_scale=True, palette=palette, saturation=0.9,
                    linewidth=0.8, width=0.6, fill=True)
 
@@ -131,7 +135,7 @@ def create_reliability_plot(table, file_name):
               fontsize=9)
 
     # Save plot
-    plt.savefig(os.path.join(RESULTS_DIR, f'{file_name} Regression.png'), dpi=1500,
+    plt.savefig(os.path.join(RESULTS_DIR, f'{file_name} Regression.png'), dpi=600,
                 bbox_inches='tight', pad_inches=0.1)
     plt.close()
 
@@ -172,7 +176,7 @@ def main():
             print(f"No matching validity file found for {participant_id}")
 
     # Process combined data
-    table_all = remove_outliers(table_all)
+    # table_all = remove_outliers(table_all)
     create_reliability_plot(table_all, 'Subject Average')
 
 
