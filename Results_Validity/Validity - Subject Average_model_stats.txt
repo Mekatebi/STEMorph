@@ -4,7 +4,7 @@ Dep. Variable:                 Answer   R-squared:                       0.741
 Model:                            OLS   Adj. R-squared:                  0.741
 Method:                 Least Squares   F-statistic:                     9341.
 Date:                Fri, 14 Feb 2025   Prob (F-statistic):               0.00
-Time:                        04:59:01   Log-Likelihood:                -29480.
+Time:                        10:05:09   Log-Likelihood:                -29480.
 No. Observations:               19596   AIC:                         5.897e+04
 Df Residuals:                   19589   BIC:                         5.903e+04
 Df Model:                           6                                         

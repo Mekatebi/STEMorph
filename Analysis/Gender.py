@@ -118,7 +118,7 @@ def create_subgroup_plot(table, model, group_type):
     sns.violinplot(data=violin_data, x='Morph Step', y='Partial_Residuals',
                    hue='Gender_Group', palette=palette, split=True,
                    inner=None, cut=3, gap=0.45, linewidth=1,
-                   alpha=0.6, saturation=0.8, width=1.5)
+                   alpha=0.6, saturation=0.8, width=1.4)
 
     r2_values = {}
     formulas = []
@@ -133,6 +133,11 @@ def create_subgroup_plot(table, model, group_type):
             table, gender_label, group_type)
         formula = f"{gender_label}: Answer = {intercept:.2f} + {slope:.2f} × MorphStep"
         formulas.append(formula)
+
+        print()
+        print(title_prefix)
+        print(gender_label)
+        print(formula)
 
         x_reg = np.array([1, 9])
         y_reg = slope * x_reg + intercept
@@ -150,10 +155,10 @@ def create_subgroup_plot(table, model, group_type):
     plt.title(title, pad=20, fontsize=11)
     plt.xlabel('Morphing Step | Others', fontsize=11)
     plt.ylabel('Particiapnts’ Rating (Partial Residual)', fontsize=11)
-    plt.xticks(range(9), labels=range(1, 10))
-    plt.yticks(range(9), labels=range(1, 10))
+    plt.xticks(range(0, 9))
+    plt.yticks(range(1, 10))
     plt.xlim(-1, 9)
-    plt.ylim(-1, 10)
+    plt.ylim(0, 10)
 
     sns.despine()
     plt.tight_layout()

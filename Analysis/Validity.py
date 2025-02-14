@@ -84,14 +84,14 @@ def calculate_partial_residuals(table, model, variable):
     """
     Calculate partial residuals.
     """
-    predictors = ['Morph Step', 'Face_Gender',
-                  'Subject_Gender', 'MS_FG', 'MS_SG', 'FG_SG']
-    X = sm.add_constant(table[predictors])
-    y = table['Answer']
-    var_effect = model.params[variable] * X[variable]
-    y_pred = model.predict(X)
-    residuals = y - y_pred
-    return var_effect + residuals
+    unwanted_vars = ['Subject_Gender',
+                     'Face_Gender', 'MS_SG', 'MS_FG', 'FG_SG']
+
+    unwanted_effects = sum(model.params[var] * table[var]
+                           for var in unwanted_vars)
+    residuals = table['Answer'] - unwanted_effects
+
+    return residuals
 
 
 def remove_outliers(table):
@@ -232,10 +232,10 @@ def create_validity_plot(table, file_name):
         plt.plot(x_reg, y_reg, 'k:', linewidth=1, zorder=3)
 
         # Plot formatting
+        plt.xticks(range(0, 9))
+        plt.yticks(range(1, 10))
         plt.xlim(-1, 9)
-        plt.ylim(-1.5, 9)
-        plt.xticks(range(9), labels=range(1, 10))
-        plt.yticks(range(9), labels=range(1, 10))
+        plt.ylim(0, 10)
 
         # Title and labels with formula
         formula = (

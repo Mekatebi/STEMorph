@@ -106,9 +106,11 @@ def create_reliability_plot(table, file_name):
     plt.gca().spines['top'].set_visible(False)
     plt.gca().spines['right'].set_visible(False)
 
-    # Plot setup
+    plt.xticks(range(0, 9))
+    plt.yticks(range(1, 10))
     plt.xlim(0, 10)
     plt.ylim(0, 10)
+
     palette = sns.color_palette(
         "vlag", np.unique(table['Answer_Validity']).size)
     palette.reverse()
