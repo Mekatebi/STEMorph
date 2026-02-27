@@ -1,200 +1,280 @@
 """
 Reliability Analysis for STEMorph
 
-This script performs reliability analysis on STEMorph, comparing initial and retest
-participant ratings. It processes data from both sessions, performs outlier removal, conducts linear regression, and generates visualizations.
-
-Author: Mohammad Ebrahim Katebi
+Author: Mohammad Ebrahim Katebi (mekatebi.2000@gmail.com)
 """
 
 import os
-import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn import linear_model
+import pandas as pd
 import seaborn as sns
-import pingouin as pg
-import copy
+from sklearn import linear_model
 
+# ---------------------------------------------------------------------------
+# Global style
+# ---------------------------------------------------------------------------
+plt.rcParams.update(
+    {
+        "font.family": "sans-serif",
+        "font.sans-serif": ["Helvetica Neue", "Arial", "DejaVu Sans"],
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "axes.linewidth": 0.8,
+        "xtick.major.width": 0.8,
+        "ytick.major.width": 0.8,
+        "xtick.major.size": 4,
+        "ytick.major.size": 4,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
+        "axes.labelsize": 13,
+        "axes.titlesize": 13,
+        "axes.titleweight": "bold",
+        "savefig.dpi": 600,
+        "savefig.bbox": "tight",
+        "savefig.pad_inches": 0.1,
+    }
+)
+
+# ---------------------------------------------------------------------------
 # Constants
-RELIABILITY_FILES_ADDRESS = '../Data_Reliability/'
-VALIDITY_FILES_ADDRESS = '../Data_Validity/'
-RESULTS_DIR = '../Results_Reliability/'
+# ---------------------------------------------------------------------------
+RELIABILITY_FILES_ADDRESS = "../Data_Reliability/"
+VALIDITY_FILES_ADDRESS = "../Data_Validity/"
+RESULTS_DIR = "../Results_Reliability/"
+
+MORPH_PALETTE = sns.diverging_palette(10, 220, s=70, l=55, n=9, as_cmap=False)
+
+# ---------------------------------------------------------------------------
+# Data loading & preprocessing
+# ---------------------------------------------------------------------------
 
 
-def load_and_preprocess_data(file_name, address):
+def load_and_preprocess_data(file_name: str, address: str) -> pd.DataFrame:
     """
-    Load and preprocess data from a CSV file.
-
-    Args:
-        file_name (str): Name of the CSV file to load.
-        address (str): Directory containing the file.
-
-    Returns:
-        pandas.DataFrame: Preprocessed data table.
+    Load a participant CSV, filter to valid trials (State == 1), and drop
+    bookkeeping columns. Missing columns are skipped gracefully.
     """
     data = pd.read_csv(os.path.join(address, file_name), header=0)
-    data = data[data['State'] == 1]
-    table = data.drop(
-        columns=['State', 'ITI', 'Trial_Onset', 'Stim_Onset', 'Stim_Offset', 'RT'])
-    return table
+    data = data[data["State"] == 1]
+
+    drop_cols = ["State", "ITI", "Trial_Onset",
+                 "Stim_Onset", "Stim_Offset", "RT"]
+    data = data.drop(columns=[c for c in drop_cols if c in data.columns])
+
+    return data
 
 
-def remove_outliers(table):
+# ---------------------------------------------------------------------------
+# Outlier removal
+# ---------------------------------------------------------------------------
+
+def remove_outliers(table: pd.DataFrame) -> pd.DataFrame:
     """
-    Remove outliers from the data.
-
-    Args:
-        table (pandas.DataFrame): Input data table.
-
-    Returns:
-        pandas.DataFrame: Data table with outliers removed.
+    Exclude per-validity-rating outliers (> 2 SD from the group mean) for
+    visualisation only -- regression uses the full dataset.
     """
-    for answer_validity in np.unique(table['Answer_Validity']):
-        step_data = table[table['Answer_Validity'] == answer_validity]
-        mean = step_data['Answer'].mean()
-        std = step_data['Answer'].std()
-        table = table[
-            (table['Answer_Validity'] != answer_validity) |
-            ((table['Answer_Validity'] == answer_validity) &
-             (abs(table['Answer'] - mean) < 2 * std))
-        ]
-    return table
+    cleaned = table.copy()
+    for val_rating in cleaned["Answer_Validity"].unique():
+        mask = cleaned["Answer_Validity"] == val_rating
+        group = cleaned.loc[mask, "Answer"]
+        mean, std = group.mean(), group.std()
+        cleaned = cleaned[~mask | (np.abs(group - mean) < 2 * std)]
+    return cleaned
 
 
-def perform_linear_regression(x, y):
+# ---------------------------------------------------------------------------
+# Regression
+# ---------------------------------------------------------------------------
+
+def perform_linear_regression(x: np.ndarray, y: np.ndarray) -> tuple:
     """
-    Perform linear regression.
+    Fit a simple OLS regression (retest ~ validity rating).
 
-    Args:
-        x (numpy.ndarray): Input features (Initial answers).
-        y (numpy.ndarray): Target variable (Retest answers).
-
-    Returns:
-        tuple: Regression model, intercept, and slope.
+    Returns (model, intercept, slope, r_squared).
     """
     regr = linear_model.LinearRegression()
     regr.fit(x, y)
-    intercept = round(regr.intercept_, 3)
-    slope = round(regr.coef_[0], 3)
-    return regr, intercept, slope
+
+    r_squared = round(regr.score(x, y), 3)
+    intercept = round(float(regr.intercept_), 3)
+    slope = round(float(regr.coef_[0]), 3)
+
+    return regr, intercept, slope, r_squared
 
 
-def create_reliability_plot(table, file_name):
+# ---------------------------------------------------------------------------
+# Visualisation
+# ---------------------------------------------------------------------------
+
+def _add_jitter(n: int, scale: float, aspect: float) -> tuple:
+    """Return (x_jitter, y_jitter) arrays with circular, aspect-corrected noise."""
+    angle = np.random.uniform(0, 2 * np.pi, n)
+    radius = np.random.uniform(0, scale, n)
+    return radius * np.cos(angle), radius * np.sin(angle) / (1 / aspect)
+
+
+def create_reliability_plot(table: pd.DataFrame, file_name: str) -> None:
     """
-    Create and save a reliability plot for the given data.
-
-    Args:
-        table (pandas.DataFrame): Preprocessed data table.
-        file_name (str): Name of the file for saving the plot.
+    Produce the reliability figure: violin distributions of retest answers
+    at each validity rating level, overlaid with jittered raw points, per-
+    level means, and the OLS regression line.
     """
-    # Create a copy of the table for violin plots with outliers removed
-    table_no_outliers = remove_outliers(copy.deepcopy(table))
+    x = table["Answer_Validity"].values.reshape(-1, 1)
+    y = table["Answer"].values
 
-    x = table['Answer_Validity'].values.reshape(-1, 1)
-    y = table['Answer']
+    regr, intercept, slope, r_squared = perform_linear_regression(x, y)
 
-    regr, intercept, slope = perform_linear_regression(x, y)
-    r_squared = round(pg.corr(table['Answer_Validity'], y)[
-                      'r'].values[0] ** 2, 3)
+    # ------------------------------------------------------------------
+    # 1. Set up figure
+    # ------------------------------------------------------------------
+    fig, ax = plt.subplots(figsize=(8, 8))
+    bbox = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+    aspect = bbox.width / bbox.height
 
-    plt.figure(figsize=(9, 9))
-    sns.set_style("ticks")
-    sns.despine()
+    # ------------------------------------------------------------------
+    # 2. Violin plots (outlier-trimmed for visualisation only)
+    # ------------------------------------------------------------------
+    table_clean = remove_outliers(table)
 
-    # Remove top and right frames
-    plt.gca().spines['top'].set_visible(False)
-    plt.gca().spines['right'].set_visible(False)
+    sns.violinplot(
+        data=table_clean,
+        x="Answer_Validity",
+        y="Answer",
+        hue="Answer_Validity",
+        legend=False,
+        inner=None,
+        cut=2,
+        native_scale=True,
+        palette=MORPH_PALETTE,
+        linewidth=0.8,
+        width=0.6,
+        alpha=0.6,
+        ax=ax,
+        zorder=2,
+    )
 
-    plt.xticks(range(0, 9))
-    plt.yticks(range(1, 10))
-    plt.xlim(0, 10)
-    plt.ylim(0, 10)
+    # ------------------------------------------------------------------
+    # 3. Scatter -- raw jittered points
+    # ------------------------------------------------------------------
+    x_jitter, y_jitter = _add_jitter(len(table), scale=0.1, aspect=aspect)
+    table = table.copy()
+    table["Answer_Validity_Jittered"] = table["Answer_Validity"] + x_jitter
+    table["Answer_Jittered"] = table["Answer"] + y_jitter
 
-    palette = sns.color_palette(
-        "vlag", np.unique(table['Answer_Validity']).size)
-    palette.reverse()
+    ax.scatter(
+        table["Answer_Validity_Jittered"],
+        table["Answer_Jittered"],
+        s=2,
+        color="#888888",
+        alpha=0.40,
+        marker=".",
+        zorder=1,
+        rasterized=True,
+    )
 
-    # Plot data
-    sns.violinplot(data=table_no_outliers, x="Answer_Validity", y="Answer", hue="Answer_Validity", legend=False,
-                   inner=None, cut=3, native_scale=True, palette=palette, saturation=1,
-                   linewidth=0.8, width=0.6, fill=True, alpha=0.85)
+    # ------------------------------------------------------------------
+    # 4. Per-level mean markers
+    # ------------------------------------------------------------------
+    means = table.groupby("Answer_Validity")["Answer"].mean()
+    ax.scatter(
+        means.index,
+        means.values,
+        color="#111111",
+        s=60,
+        zorder=5,
+        label="Step mean",
+    )
 
-    # Calculate jitter
-    ax = plt.gca()
-    bbox = ax.get_window_extent().transformed(plt.gcf().dpi_scale_trans.inverted())
-    aspect_ratio = bbox.width / bbox.height
-    angle = np.random.uniform(0, 2 * np.pi, table['Answer_Validity'].size)
-    radius = np.random.uniform(0, 0.1, table['Answer_Validity'].size)
-    x_jitter = radius * np.cos(angle)
-    y_jitter = radius * np.sin(angle) / (1 / aspect_ratio)
+    # ------------------------------------------------------------------
+    # 5. Regression line
+    # ------------------------------------------------------------------
+    x_line = np.array([0.5, 9.5])
+    ax.plot(
+        x_line,
+        regr.predict(x_line.reshape(-1, 1)),
+        color="#111111",
+        linewidth=1.8,
+        linestyle="--",
+        zorder=4,
+        label=f"R2 = {r_squared:.3f}",
+    )
 
-    # Apply jitter and plot
-    table['Answer_Validity_Jittered'] = table['Answer_Validity'] + x_jitter
-    table['Answer_Jittered'] = table['Answer'] + y_jitter
-    sns.scatterplot(data=table, x="Answer_Validity_Jittered", y="Answer_Jittered",
-                    s=1, color='black', marker=".", linewidth=0.05)
+    # ------------------------------------------------------------------
+    # 6. Axes, labels, and formatting
+    # ------------------------------------------------------------------
+    ax.set_xticks(np.arange(1, 10, 1))
+    ax.set_yticks(np.arange(1, 10, 1))
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 10)
 
-    sns.lineplot(data=table, x="Answer_Validity", y=regr.predict(x),
-                 color='gray', linewidth=1, linestyle='dotted')
+    ax.set_title("Reliability of Participants\u2019 Ratings", pad=10)
+    ax.set_xlabel("Validity Rating")
+    ax.set_ylabel("Matched Retest Rating")
 
-    answers_validity = table.groupby('Answer_Validity')[
-        'Answer_Validity'].mean()
-    means = table.groupby('Answer_Validity')['Answer'].mean()
-    plt.scatter(x=answers_validity, y=means, color='black', s=19)
+    ax.legend(
+        loc="upper left",
+        fontsize=10,
+        frameon=True,
+        framealpha=1.0,
+        edgecolor="#cccccc",
+        borderpad=0.6,
+        borderaxespad=1.8,
+        markerscale=1,
+    )
+    ax.grid(axis="y", linestyle=":", linewidth=0.4, color="#cccccc", zorder=0)
 
-    # Labels and title
-    plt.xlabel('Validity Rating', fontsize=12)
-    plt.ylabel('Retest Answers', fontsize=12)
-    plt.xticks(np.arange(1, 10, 1))
-    plt.yticks(np.arange(1, 10, 1))
-    plt.title(f'Reliability - Subject Average\nR2 = {r_squared} | Particiapans\' Retest Rating = {intercept} + {slope} . VR',
-              fontsize=12)
-
-    # Save plot
-    plt.savefig(os.path.join(RESULTS_DIR, f'{file_name} Regression.png'), dpi=400,
-                bbox_inches='tight', pad_inches=0.1)
+    sns.despine(ax=ax)
+    plt.tight_layout()
+    plt.savefig(os.path.join(
+        RESULTS_DIR, f"{file_name} Regression.png"), dpi=600)
     plt.close()
 
 
-def main():
-    """
-    Main function to run the reliability analysis.
-    """
-    # Ensure results directory exists
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+def main() -> None:
     os.makedirs(RESULTS_DIR, exist_ok=True)
 
-    # Process all files
     reliability_files = os.listdir(RELIABILITY_FILES_ADDRESS)
     validity_files = os.listdir(VALIDITY_FILES_ADDRESS)
-    table_all = pd.DataFrame()
+    frames = []
 
     for reliability_file in reliability_files:
-        print(f"Processing {reliability_file}")
         participant_id = reliability_file[8:12]
         reliability_table = load_and_preprocess_data(
-            reliability_file, RELIABILITY_FILES_ADDRESS)
+            reliability_file, RELIABILITY_FILES_ADDRESS
+        )
 
-        # Find corresponding validity file
         validity_file = next(
-            (f for f in validity_files if participant_id in f), None)
+            (f for f in validity_files if participant_id in f), None
+        )
+
         if validity_file:
-            print(f"Matched validity file: {validity_file}")
+            print(f"Matched:  {reliability_file}  <->  {validity_file}")
             validity_table = load_and_preprocess_data(
-                validity_file, VALIDITY_FILES_ADDRESS)
-
-            # Merge reliability and validity data
-            merged_table = pd.merge(reliability_table, validity_table,
-                                    on=['Position ID',
-                                        'Face Person', 'Morph Step'],
-                                    suffixes=['', '_Validity'])
-            table_all = pd.concat([table_all, merged_table], axis=0)
+                validity_file, VALIDITY_FILES_ADDRESS
+            )
+            merged = pd.merge(
+                reliability_table,
+                validity_table,
+                on=["Position ID", "Face Person", "Morph Step"],
+                suffixes=["", "_Validity"],
+            )
+            frames.append(merged)
         else:
-            print(f"No matching validity file found for {participant_id}")
+            print(
+                f"Warning:  No matching validity file for participant {participant_id}")
 
-    # Process combined data
-    # table_all = remove_outliers(table_all)
-    create_reliability_plot(table_all, 'Subject Average')
+    if not frames:
+        print("Error: No matched data to analyse.")
+        return
+
+    table_all = pd.concat(frames, axis=0, ignore_index=True)
+    create_reliability_plot(table_all, "Subject Average")
+    print(f"\nAnalysis complete. Results saved to: {RESULTS_DIR}")
 
 
 if __name__ == "__main__":
