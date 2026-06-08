@@ -1,0 +1,9 @@
+Per-identity face gender comparison
+===================================
+
+Female faces (n=11): mean = 4.917, SD = 0.161
+Male faces   (n=11): mean = 4.794, SD = 0.116
+
+Mann-Whitney U = 87.00
+p (one-tailed, F > M) = 0.0439
+Cohen's d = 0.875

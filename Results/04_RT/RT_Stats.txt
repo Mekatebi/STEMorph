@@ -1,0 +1,44 @@
+Response time analysis (valid trials only, State == 1)
+=======================================================
+
+N valid trials : 19596
+Mean RT (s)    : 1.827
+Median RT (s)  : 1.695
+SD RT (s)      : 0.695
+
+RT per morph step:
+                mean       std  count
+Morph_Step                           
+1           1.796193  0.658479   2173
+2           1.837368  0.694921   2173
+3           1.850988  0.682652   2179
+4           1.839018  0.735701   2174
+5           1.811442  0.730230   2180
+6           1.874839  0.730057   2172
+7           1.848405  0.695122   2170
+8           1.812390  0.677172   2186
+9           1.768843  0.642390   2189
+
+Mixed-effects model on log-RT
+centered morph step + quadratic term + face/participant gender,
+with random intercepts for participant and face identity
+
+            Mixed Linear Model Regression Results
+=============================================================
+Model:               MixedLM  Dependent Variable:  log_RT    
+No. Observations:    19596    Method:              REML      
+No. Groups:          1        Scale:               0.1162    
+Min. group size:     19596    Log-Likelihood:      -6860.8002
+Max. group size:     19596    Converged:           Yes       
+Mean group size:     19596.0                                 
+-------------------------------------------------------------
+                   Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+-------------------------------------------------------------
+Intercept           0.552    0.038 14.365 0.000  0.476  0.627
+MS_c               -0.001    0.001 -1.360 0.174 -0.003  0.001
+MS_c2              -0.001    0.000 -2.936 0.003 -0.002 -0.000
+Face_Gender         0.012    0.008  1.628 0.104 -0.002  0.027
+Participant_Gender -0.032    0.051 -0.634 0.526 -0.132  0.067
+Face_Person Var     0.000    0.000                           
+ID Var              0.031    0.019                           
+=============================================================

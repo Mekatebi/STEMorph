@@ -1,0 +1,32 @@
+Linear mixed-effects model (Equation 1, primary analysis)
+=========================================================
+
+Specification:
+  Answer ~ MS + FG + PG + MS:FG + MS:PG + FG:PG
+         + (1 | participant ID)
+         + (1 | face identity)
+
+Marginal R² (fixed effects only)         : 0.7251
+Conditional R² (fixed + random effects)  : 0.7591
+
+            Mixed Linear Model Regression Results
+==============================================================
+Model:               MixedLM  Dependent Variable:  Answer     
+No. Observations:    19596    Method:              REML       
+No. Groups:          1        Scale:               1.1273     
+Min. group size:     19596    Log-Likelihood:      -29112.3949
+Max. group size:     19596    Converged:           Yes        
+Mean group size:     19596.0                                  
+--------------------------------------------------------------
+                   Coef.  Std.Err.    z    P>|z| [0.025 0.975]
+--------------------------------------------------------------
+Intercept           1.238    0.117  10.602 0.000  1.009  1.466
+Morph_Step          0.735    0.005 138.366 0.000  0.725  0.745
+Face_Gender        -0.248    0.152  -1.628 0.103 -0.546  0.050
+Participant_Gender  0.325    0.067   4.819 0.000  0.193  0.457
+MS_FG               0.026    0.006   4.444 0.000  0.015  0.038
+MS_PG              -0.065    0.006 -10.943 0.000 -0.076 -0.053
+FG_PG              -0.008    0.031  -0.256 0.798 -0.068  0.052
+Face_Person Var     0.119                                     
+ID Var              0.040    0.007                            
+==============================================================

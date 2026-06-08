@@ -1,0 +1,17 @@
+Outlier sensitivity analysis
+============================
+
+Primary mixed-effects model fit on the full dataset and on the outlier-trimmed dataset
+(per morph step, >2 SD from the step mean removed).
+
+Full dataset N        : 19596
+Trimmed dataset N     : 18548
+Observations excluded : 1048 (5.35%)
+
+              Predictor  Full_beta  Full_p  Trimmed_beta  Trimmed_p  Delta_beta  Percent_delta
+        Morph Step (MS)     0.7350  0.0000        0.7708     0.0000      0.0359         4.8787
+       Face Gender (FG)    -0.2476  0.1034       -0.2045     0.0642      0.0431        17.3953
+Participant Gender (PG)     0.3252  0.0000        0.2751     0.0000     -0.0500       -15.3914
+                MS × FG     0.0261  0.0000        0.0271     0.0000      0.0010         3.7810
+                MS × PG    -0.0647  0.0000       -0.0603     0.0000      0.0045         6.8890
+                FG × PG    -0.0078  0.7978       -0.0303     0.2161     -0.0224      -286.4749

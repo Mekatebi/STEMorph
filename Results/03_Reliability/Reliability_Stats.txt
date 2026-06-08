@@ -1,0 +1,21 @@
+Test-retest reliability analysis
+================================
+
+Primary metric: ICC(2,1)
+  Two-way random-effects, absolute-agreement, single-measure ICC.
+
+ Type             Description      ICC         F  df1  df2  pval        CI95%
+ ICC1  Single raters absolute 0.857731 13.057830 8932 8933   0.0 [0.85, 0.86]
+ ICC2    Single random raters 0.857735 13.063746 8932 8932   0.0 [0.85, 0.86]
+ ICC3     Single fixed raters 0.857790 13.063746 8932 8932   0.0 [0.85, 0.86]
+ICC1k Average raters absolute 0.923418 13.057830 8932 8933   0.0 [0.92, 0.93]
+ICC2k   Average random raters 0.923420 13.063746 8932 8932   0.0 [0.92, 0.93]
+ICC3k    Average fixed raters 0.923452 13.063746 8932 8932   0.0 [0.92, 0.93]
+
+Reported ICC(2,1) = 0.858, 95% CI [0.85 0.86]
+
+Companion OLS regression (retest ~ validity):
+  Intercept  = 0.814
+  Slope      = 0.840
+  R²         = 0.736
+  Spearman ρ = 0.866

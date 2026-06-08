@@ -1,0 +1,27 @@
+Missing-trials analysis (State == 3, timeout)
+============================================
+
+Total trials                : 19800
+Timed-out trials            : 204
+Percentage missing          : 1.03%
+
+Missing trials per morph step:
+Morph Step
+1    27
+2    27
+3    21
+4    26
+5    20
+6    28
+7    30
+8    14
+9    11
+
+Chi-squared test, missingness x morph step:
+    chi2 = 15.691, p = 0.0470
+
+Chi-squared test, missingness x face gender:
+    chi2 = 3.096, p = 0.0785
+
+Chi-squared test, missingness x participant gender:
+    chi2 = 7.457, p = 0.0063
